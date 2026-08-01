@@ -2,17 +2,22 @@ package mailer
 
 import (
 	"net/http"
+	"encoding/json"
 )
 
 type (
 	Handler struct {
+		service Service
+	}
 
+	tokenRequest struct {
+		PushToken string `json:"push_token"`
 	}
 )
 
-func (h Handler) RegisterToken(w http.ResponseWriter, r *http.Request) {
+func NewHandler(service Service) *Handler {
+	return Handler{service: service}
 }
 
-func (h Handler) DeleteTokens(w http.ResponseWriter, r *http.Request) {
-}
+
 

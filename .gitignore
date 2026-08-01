@@ -1,0 +1,33 @@
+# Compiled binaries and local executables
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test artifacts and code coverage outputs
+*.test
+*.out
+*.coverprofile
+profile.cov
+
+# Dependency directories
+# Only uncomment vendor/ if you are explicitly choosing to vendor dependencies
+# vendor/
+
+# Go workspace files
+go.work
+go.work.sum
+
+# Local environment configuration file
+.env
+
+# Common IDE/Editor setups
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
