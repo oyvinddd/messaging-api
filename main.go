@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"github.com/oyvinddd/messaging-api/internal/app"
 )
 
