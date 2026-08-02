@@ -1,4 +1,4 @@
-package email
+package mailer
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 
 type (
 	Service interface {
-		Send(recipient, subject, body string) error
+		Send(ctx context.Context, recipient, subject, body string) error
 	}
 
 	postmarkService struct {
@@ -16,5 +16,9 @@ type (
 
 func NewPostmarkService(apiKey string) Service {
 	return &postmarkService{apiKey: apiKey}
+}
+
+func (s *postmarkService) Send(ctx context.Context, recipient, subject, body string) error {
+	return nil
 }
 

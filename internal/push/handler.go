@@ -3,6 +3,7 @@ package push
 import (
 	"net/http"
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/oyvinddd/messaging-api/internal/response"
 )
 
@@ -10,23 +11,22 @@ type (
 	Handler struct {
 		service Service
 	}
-
-	tokenRequest struct {
-		PushToken string `json:"push_token"`
-	}
 )
 
 func NewHandler(service Service) *Handler {
-	&Handler{service: service}
+	return &Handler{service: service}
 }
 
 func (h Handler) RegisterToken(w http.ResponseWriter, r *http.Request) {
-	var request tokenRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	var token Token 
+	if err := json.NewDecoder(r.Body).Decode(&token); err != nil {
 		response.WithError(w, err, http.StatusBadRequest)
 		return
 	}
-	if err := h.service.Register(r.Context(), "", request.PushToken); err != nil {
+
+	id := uuid.New() //TODO: fix
+
+	if err := h.service.RegisterToken(r.Context(), id, token); err != nil {
 		response.WithError(w, err, http.StatusBadRequest)
 		return
 	}

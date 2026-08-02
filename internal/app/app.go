@@ -5,13 +5,19 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"context"
 	"github.com/joho/godotenv"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/oyvinddd/xtoken"
+	"github.com/oyvinddd/messaging-api/internal/push"
+	"github.com/oyvinddd/messaging-api/internal/mailer"
 )
 
 const (
-	/* token ruotes */
+	/* token routes */
 	registerTokenRoute 	= "POST /api/v1/push/register"
 	deleteTokensRoute 	= "DELETE /api/v1/push/delete"
+	//sendPushRoute		= "POST /"
 	/* email routes */
 	sendEmailRoute 		= "POST /api/v1/email/send"
 )
@@ -41,10 +47,83 @@ func New() *App {
 		},
 	}
 
+	app.registerRoutes()
+
 	return app
 }
 
+func (a *App) registerRoutes() {
+
+	dbURI := os.Getenv("POSTGRES_URI")
+	if dbURI == "" {
+		log.Fatal("missing Postgres connection string")
+	}
+
+	dbConn, err := setupDBConnection(context.Background(), os.Getenv("POSTGRES_URI")) 
+	if err != nil {
+		log.Fatalf("unable to connect to db: %v\n", err)
+	}
+
+	postmarkAPIKey := os.Getenv("POSTMARK_API_KEY")
+	if postmarkAPIKey == "" {
+		log.Fatal("missing Postmark API key")
+	}
+
+	// set HMAC secret for auth middleware
+	hmac := os.Getenv("HMAC_SECRET")
+	if hmac == "" {
+		log.Fatal("missing HMAC secret")
+	}
+	xtoken.SetHMACSecret(hmac)
+
+	pushRepository := push.NewRepository(dbConn)
+
+	pushService := push.NewService(pushRepository)
+	mailService := mailer.NewPostmarkService(postmarkAPIKey)
+
+	pushHandler := push.NewHandler(pushService)
+	mailHandler := mailer.NewHandler(mailService)
+
+	a.mux.Handle(
+		registerTokenRoute,
+		xtoken.Authorize(
+			http.HandlerFunc(pushHandler.RegisterToken),
+			xtoken.UserRole,
+		),
+	)
+
+	a.mux.Handle(
+		deleteTokensRoute,
+		xtoken.Authorize(
+			http.HandlerFunc(pushHandler.RegisterToken),
+			xtoken.UserRole,
+		),
+	)
+
+	a.mux.Handle(
+		sendEmailRoute,
+		xtoken.Authorize(
+			http.HandlerFunc(mailHandler.SendMail),
+			xtoken.UserRole,
+		),
+	)
+}
+
+func setupDBConnection(ctx context.Context, connString string) (*pgxpool.Pool, error) {
+	pool, err := pgxpool.New(ctx, connString)
+	if err != nil {
+		return nil, err
+	}
+	// since New() doesn't wait to check if a connection was established,
+	// we'll try to ping the db right after to verify that we are connected
+	if err := pool.Ping(ctx); err != nil {
+		return nil, err
+	}
+	return pool, nil
+}
+
 func (a *App) Run() error {
+	fmt.Printf("Starting messaging service on %v...\n", a.addr)
 	return a.server.ListenAndServe()
 }
 

@@ -15,12 +15,12 @@ func WithJSON(w http.ResponseWriter, data interface{}, statusCode int) {
 	_ = json.NewEncoder(w).Encode(&data)
 }
 
-func WithError(w http.ResponseWriter, err error, code int) {
+func WithError(w http.ResponseWriter, err error, statusCode int) {
 	responseError := struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`
 	}{
-		Code:    code,
+		Code:    statusCode,
 		Message: err.Error(),
 	}
 	WithJSON(w, responseError, statusCode)
