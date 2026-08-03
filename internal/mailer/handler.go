@@ -2,11 +2,24 @@ package mailer
 
 import (
 	"net/http"
+	"encoding/json"
+	"github.com/oyvinddd/messaging-api/internal/response"
 )
 
 type (
 	Handler struct {
 		service Service
+	}
+
+	Message struct {
+		// Sender the email of the sender
+		Sender string `json:"sender"`
+		// Recipient the email of the recipient
+		Recipient string `json:"recipient"`
+		// Subject the subject of the email
+		Subject string `json:"subject"`
+		// Body the content of the email
+		Body string `json:"body"`
 	}
 )
 
@@ -15,5 +28,15 @@ func NewHandler(service Service) *Handler {
 }
 
 func (h *Handler) SendMail(w http.ResponseWriter, r *http.Request) {
+	var message Message
+	if err := json.NewDecoder(r.Body).Decode(&message); err != nil {
+		response.WithError(w, malformedEmailError, http.StatusBadRequest)
+		return
+	}
+	if err := h.service.Send(r.Context(), message); err != nil {
+		response.WithError(w, err, http.StatusBadRequest)
+		return
+	}
+	response.WithStatusOnly(w, http.StatusOK)
 }
 
