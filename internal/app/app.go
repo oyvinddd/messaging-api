@@ -13,17 +13,6 @@ import (
 	"github.com/oyvinddd/messaging-api/internal/mailer"
 )
 
-const (
-	/* send push route (INTERNAL ONLY) */
-	sendPushRoute		= "POST /api/v1/internal/push/send"
-	/* token management routes */
-	registerTokenRoute 	= "POST /api/v1/push/register"
-	deleteTokensRoute 	= "DELETE /api/v1/push/delete"
-	deleteTokenRoute	= "DELETE /api/v1/push/delete/{id}"
-	/* email routes */
-	sendEmailRoute 		= "POST /api/v1/email/send"
-)
-
 type (
 	App struct {
 		addr	string
