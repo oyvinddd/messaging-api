@@ -48,6 +48,7 @@ func (h *Handler) RegisterToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteTokens(w http.ResponseWriter, r *http.Request) {
+	// FIXME: this should prbably be secured by service key and not regular auth MW
 	// we can safely ignore error handling since handler is locked down by mw
 	claims, _ := xtoken.GetAccessTokenClaims(r.Context())
 	if err := h.service.DeleteTokens(r.Context(), claims.ID); err != nil {
@@ -56,3 +57,17 @@ func (h *Handler) DeleteTokens(w http.ResponseWriter, r *http.Request) {
 	}
 	response.WithStatusOnly(w, http.StatusNoContent)
 }
+
+func (h *Handler) DeleteToken(w http.ResponseWriter, r *http.Request) {
+	// FIXME: this should prbably be secured by service key and not regular auth MW
+	// we can safely ignore error handling since handler is locked down by mw
+	/*
+	claims, _ := xtoken.GetAccessTokenClaims(r.Context())
+	if err := h.service.DeleteTokens(r.Context(), claims.ID); err != nil {
+		response.WithError(w, err, http.StatusBadRequest)
+		return
+	}
+	response.WithStatusOnly(w, http.StatusNoContent)
+	*/
+}
+

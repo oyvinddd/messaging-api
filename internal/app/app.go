@@ -14,11 +14,12 @@ import (
 )
 
 const (
-	/* send push route */
-	sendPushRoute		= "POST /api/v1/push/send"
+	/* send push route (INTERNAL ONLY) */
+	sendPushRoute		= "POST /api/v1/internal/push/send"
 	/* token management routes */
 	registerTokenRoute 	= "POST /api/v1/push/register"
 	deleteTokensRoute 	= "DELETE /api/v1/push/delete"
+	deleteTokenRoute	= "DELETE /api/v1/push/delete/{id}"
 	/* email routes */
 	sendEmailRoute 		= "POST /api/v1/email/send"
 )
@@ -77,6 +78,11 @@ func (a *App) registerRoutes() {
 	}
 	xtoken.SetHMACSecret(hmac)
 
+	serviceKey := os.Getenv("SERVICE_KEY")
+	if serviceKey == "" {
+		log.Fatal("missing server key")
+	}
+
 	pushRepository := push.NewRepository(dbConn)
 
 	firebaseProvider := push.NewFirebaseProvider(context.Background(), "TODO:")
@@ -87,9 +93,19 @@ func (a *App) registerRoutes() {
 	pushHandler := push.NewHandler(pushService)
 	mailHandler := mailer.NewHandler(mailService)
 
-	// TODO: make these two APIs internal to the Docker network and not publicly available
-	a.mux.HandleFunc(sendEmailRoute, mailHandler.SendEmail)
-	a.mux.HandleFunc(sendPushRoute, pushHandler.SendPush)
+	a.mux.Handle(
+		sendEmailRoute,
+		xtoken.RequireServiceKey(serviceKey)(
+			http.HandlerFunc(mailHandler.SendEmail),
+		),
+	)
+
+	a.mux.Handle(
+		sendPushRoute, 
+		xtoken.RequireServiceKey(serviceKey)(
+			http.HandlerFunc(pushHandler.SendPush),
+		),
+	)
 
 	a.mux.Handle(
 		registerTokenRoute,
@@ -102,7 +118,23 @@ func (a *App) registerRoutes() {
 	a.mux.Handle(
 		deleteTokensRoute,
 		xtoken.Authorize(
-			http.HandlerFunc(pushHandler.RegisterToken),
+			http.HandlerFunc(pushHandler.DeleteTokens),
+			xtoken.UserRole,
+		),
+	)
+
+	a.mux.Handle(
+		deleteTokenRoute,
+		xtoken.Authorize(
+			http.HandlerFunc(pushHandler.DeleteToken),
+			xtoken.UserRole,
+		),
+	)
+
+	a.mux.Handle(
+		deleteTokenRoute,
+		xtoken.Authorize(
+			http.HandlerFunc(pushHandler.DeleteToken),
 			xtoken.UserRole,
 		),
 	)
