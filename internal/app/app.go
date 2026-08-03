@@ -14,10 +14,11 @@ import (
 )
 
 const (
-	/* token routes */
+	/* send push route */
+	sendPushRoute		= "POST /api/v1/push/send"
+	/* token management routes */
 	registerTokenRoute 	= "POST /api/v1/push/register"
 	deleteTokensRoute 	= "DELETE /api/v1/push/delete"
-	//sendPushRoute		= "POST /"
 	/* email routes */
 	sendEmailRoute 		= "POST /api/v1/email/send"
 )
@@ -78,11 +79,17 @@ func (a *App) registerRoutes() {
 
 	pushRepository := push.NewRepository(dbConn)
 
-	pushService := push.NewService(pushRepository)
+	firebaseProvider := push.NewFirebaseProvider(context.Background(), "TODO:")
+
+	pushService := push.NewService(pushRepository, firebaseProvider)
 	mailService := mailer.NewPostmarkService(postmarkAPIKey)
 
 	pushHandler := push.NewHandler(pushService)
 	mailHandler := mailer.NewHandler(mailService)
+
+	// TODO: make these two APIs internal to the Docker network and not publicly available
+	a.mux.HandleFunc(sendEmailRoute, mailHandler.SendEmail)
+	a.mux.HandleFunc(sendPushRoute, pushHandler.SendPush)
 
 	a.mux.Handle(
 		registerTokenRoute,
@@ -96,14 +103,6 @@ func (a *App) registerRoutes() {
 		deleteTokensRoute,
 		xtoken.Authorize(
 			http.HandlerFunc(pushHandler.RegisterToken),
-			xtoken.UserRole,
-		),
-	)
-
-	a.mux.Handle(
-		sendEmailRoute,
-		xtoken.Authorize(
-			http.HandlerFunc(mailHandler.SendMail),
 			xtoken.UserRole,
 		),
 	)

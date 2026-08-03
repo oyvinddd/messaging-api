@@ -10,7 +10,7 @@ CREATE TABLE push.tokens (
 
     account_id UUID NOT NULL,
 
-    token TEXT NOT NULL,
+    device_token TEXT NOT NULL,
     platform push_platform NOT NULL,
 
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

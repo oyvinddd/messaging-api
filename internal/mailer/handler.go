@@ -27,7 +27,7 @@ func NewHandler(service Service) *Handler {
 	return &Handler{service: service}
 }
 
-func (h *Handler) SendMail(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SendEmail(w http.ResponseWriter, r *http.Request) {
 	var message Message
 	if err := json.NewDecoder(r.Body).Decode(&message); err != nil {
 		response.WithError(w, malformedEmailError, http.StatusBadRequest)
