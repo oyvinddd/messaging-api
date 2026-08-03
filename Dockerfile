@@ -20,6 +20,7 @@ RUN apt-get update && \
 WORKDIR /app
 
 COPY --from=builder /app/messaging-api .
+COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 8080
 
