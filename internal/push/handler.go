@@ -34,7 +34,7 @@ func (h *Handler) RegisterToken(w http.ResponseWriter, r *http.Request) {
 	// we can safely ignore error handling since handler is locked down by mw
 	claims, _ := xtoken.GetAccessTokenClaims(r.Context())
 
-	var token Token 
+	var token DeviceToken 
 	if err := json.NewDecoder(r.Body).Decode(&token); err != nil {
 		response.WithError(w, err, http.StatusBadRequest)
 		return

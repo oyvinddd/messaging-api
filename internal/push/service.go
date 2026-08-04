@@ -10,7 +10,7 @@ type (
 		// Send sends a push message
 		Send(ctx context.Context, message Message) error
 		// RegisterToken registers a new push token in the db
-		RegisterToken(ctx context.Context, id uuid.UUID, token Token) error
+		RegisterToken(ctx context.Context, id uuid.UUID, token DeviceToken) error
 		// DeleteTokens deletes all tokens registered on a given account
 		DeleteTokens(ctx context.Context, id uuid.UUID) error
 	}
@@ -39,7 +39,7 @@ func (s *service) Send(ctx context.Context, message Message) error {
 	return nil
 }
 
-func (s *service) RegisterToken(ctx context.Context, id uuid.UUID, token Token) error {
+func (s *service) RegisterToken(ctx context.Context, id uuid.UUID, token DeviceToken) error {
 	return s.repository.RegisterToken(ctx, id, token)
 }
 

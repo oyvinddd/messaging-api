@@ -11,11 +11,13 @@ import (
 type (
 	Repository interface {
 		// GetTokens fetches device token from db
-		GetToken(ctx context.Context, id uuid.UUID) (string, error)
+		GetToken(ctx context.Context, accountID uuid.UUID) (string, error)
 		// RegisterToken registers a new push token in the db
-		RegisterToken(ctx context.Context, id uuid.UUID, token Token) error
+		RegisterToken(ctx context.Context, accountID uuid.UUID, token DeviceToken) error
 		// DeleteTokens deletes all tokens registered on a given account
-		DeleteTokens(ctx context.Context, id uuid.UUID) error
+		DeleteTokens(ctx context.Context, accountID uuid.UUID) error
+		// DeleteToken deletes the token with a given ID
+		//DeleteToken(ctx context.Context, id uuid.UUID) error
 	}
 
 	repository struct {
@@ -27,12 +29,12 @@ func NewRepository(db *pgxpool.Pool) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) GetToken(ctx context.Context, id uuid.UUID) (string, error) {
-	query := `SELECT device_token FROM push.device_tokens WHERE account_id = $1 LIMIT 1`
+func (r *repository) GetToken(ctx context.Context, accountID uuid.UUID) (string, error) {
+	query := `SELECT token FROM push.device_tokens WHERE account_id = $1 LIMIT 1`
 
 	var deviceToken string
 
-	err := r.db.QueryRow(ctx, query, id).Scan(&deviceToken)
+	err := r.db.QueryRow(ctx, query, accountID).Scan(&deviceToken)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return "", deviceTokenNotFound 
@@ -43,11 +45,11 @@ func (r *repository) GetToken(ctx context.Context, id uuid.UUID) (string, error)
 	return deviceToken, nil
 }
 
-func (r *repository) RegisterToken(ctx context.Context, id uuid.UUID, token Token) error {
+func (r *repository) RegisterToken(ctx context.Context, accountID uuid.UUID, token DeviceToken) error {
 	_, err := r.db.Exec(ctx, `
 		INSERT INTO push.device_tokens (
 			account_id,
-			device_token,
+			token,
 			platform
 		) VALUES ($1, $2, $3)
 		ON CONFLICT (token) DO UPDATE
@@ -55,14 +57,14 @@ func (r *repository) RegisterToken(ctx context.Context, id uuid.UUID, token Toke
 			account_id = EXCLUDED.account_id,
 			platform = EXCLUDED.platform,
 			updated_at = NOW()
-	`, id, token.Value, token.Platform)
+	`, accountID, token.Value, token.Platform)
 
 	return err
 }
 
-func (r *repository) DeleteTokens(ctx context.Context, id uuid.UUID) error {
-	query := `DELETE FROM push.tokens WHERE account_id = $1`
-	_, err := r.db.Exec(ctx, query, id)
+func (r *repository) DeleteTokens(ctx context.Context, accountID uuid.UUID) error {
+	query := `DELETE FROM push.device_tokens WHERE account_id = $1`
+	_, err := r.db.Exec(ctx, query, accountID)
 	return err
 }
 

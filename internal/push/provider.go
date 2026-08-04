@@ -19,7 +19,7 @@ const (
 type (
 	Platform string
 
-	Token struct {
+	DeviceToken struct {
 		// Value is the push token
 		Value string `json:"device_token"`
 		// Platform the token belongs to
