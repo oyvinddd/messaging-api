@@ -1,12 +1,10 @@
 package app
 
 import (
-	"os"
 	"fmt"
 	"log"
 	"net/http"
 	"context"
-	"github.com/joho/godotenv"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/oyvinddd/xtoken"
 	"github.com/oyvinddd/messaging-api/internal/push"
@@ -21,12 +19,8 @@ type (
 	}
 )
 
-func New() *App {
-	if err := godotenv.Load(); err != nil {
-		log.Fatalf("unable to load environment: %v\n", err)
-	}
-
-	addr := fmt.Sprintf(":%s", os.Getenv("LISTENING_PORT"))
+func New(cfg Config) *App {
+	addr := fmt.Sprintf(":%s", cfg.listeningPort)
 	mux := http.NewServeMux()
 
 	app := &App{
@@ -38,60 +32,41 @@ func New() *App {
 		},
 	}
 
-	app.registerRoutes()
+	app.registerRoutes(cfg)
 
 	return app
 }
 
-func (a *App) registerRoutes() {
+func (a *App) registerRoutes(cfg Config) {
 
-	dbURI := os.Getenv("POSTGRES_URI")
-	if dbURI == "" {
-		log.Fatal("missing Postgres connection string")
-	}
-
-	dbConn, err := setupDBConnection(context.Background(), os.Getenv("POSTGRES_URI")) 
+	dbConn, err := setupDBConnection(context.Background(), cfg.dbURI) 
 	if err != nil {
 		log.Fatalf("unable to connect to db: %v\n", err)
 	}
 
-	postmarkAPIKey := os.Getenv("POSTMARK_API_KEY")
-	if postmarkAPIKey == "" {
-		log.Fatal("missing Postmark API key")
-	}
-
 	// set HMAC secret for auth middleware
-	hmac := os.Getenv("HMAC_SECRET")
-	if hmac == "" {
-		log.Fatal("missing HMAC secret")
-	}
-	xtoken.SetHMACSecret(hmac)
-
-	serviceKey := os.Getenv("SERVICE_KEY")
-	if serviceKey == "" {
-		log.Fatal("missing server key")
-	}
+	xtoken.SetHMACSecret(cfg.hmacSecret)
 
 	pushRepository := push.NewRepository(dbConn)
 
 	firebaseProvider := push.NewFirebaseProvider(context.Background(), "TODO:")
 
 	pushService := push.NewService(pushRepository, firebaseProvider)
-	mailService := mailer.NewPostmarkService(postmarkAPIKey)
+	mailService := mailer.NewPostmarkService(cfg.mailerAPIKey)
 
 	pushHandler := push.NewHandler(pushService)
 	mailHandler := mailer.NewHandler(mailService)
 
 	a.mux.Handle(
 		sendEmailRoute,
-		xtoken.RequireServiceKey(serviceKey)(
+		xtoken.RequireServiceKey(cfg.serviceKey)(
 			http.HandlerFunc(mailHandler.SendEmail),
 		),
 	)
 
 	a.mux.Handle(
 		sendPushRoute, 
-		xtoken.RequireServiceKey(serviceKey)(
+		xtoken.RequireServiceKey(cfg.serviceKey)(
 			http.HandlerFunc(pushHandler.SendPush),
 		),
 	)

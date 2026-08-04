@@ -6,5 +6,6 @@ import (
 )
 
 func main() {
-	log.Fatal(app.New().Run())
+	cfg := *app.NewDefaultConfig()
+	log.Fatal(app.New(cfg).Run())
 }
