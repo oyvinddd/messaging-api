@@ -5,7 +5,7 @@ CREATE TYPE push.push_platform AS ENUM (
     'fcm'
 );
 
-CREATE TABLE push.tokens (
+CREATE TABLE push.device_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     account_id UUID NOT NULL,

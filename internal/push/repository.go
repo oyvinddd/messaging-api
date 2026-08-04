@@ -28,7 +28,7 @@ func NewRepository(db *pgxpool.Pool) Repository {
 }
 
 func (r *repository) GetToken(ctx context.Context, id uuid.UUID) (string, error) {
-	query := `SELECT device_token FROM push.tokens WHERE account_id = $1 LIMIT 1`
+	query := `SELECT device_token FROM push.device_tokens WHERE account_id = $1 LIMIT 1`
 
 	var deviceToken string
 
@@ -45,7 +45,7 @@ func (r *repository) GetToken(ctx context.Context, id uuid.UUID) (string, error)
 
 func (r *repository) RegisterToken(ctx context.Context, id uuid.UUID, token Token) error {
 	_, err := r.db.Exec(ctx, `
-		INSERT INTO push.tokens (
+		INSERT INTO push.device_tokens (
 			account_id,
 			device_token,
 			platform
