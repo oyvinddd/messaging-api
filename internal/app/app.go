@@ -38,8 +38,10 @@ func New(cfg Config) *App {
 }
 
 func (a *App) registerRoutes(cfg Config) {
-
-	db, err := xdb.ConnectPG(context.Background(), *xdb.NewDefaultConfig(cfg.dbURI))
+	bgCtx := context.Background()
+	// init db connection
+	xdbCfg := *xdb.NewDefaultConfig(cfg.dbURI)
+	db, err := xdb.ConnectPG(bgCtx, xdbCfg)
 	if err != nil {
 		log.Fatalf("unable to connect to db: %v\n", err)
 	}
@@ -49,13 +51,10 @@ func (a *App) registerRoutes(cfg Config) {
 
 	pushRepository := push.NewRepository(db)
 
-	firebaseProvider := push.NewFirebaseProvider(context.Background(), cfg.firebasePKPath)
+	firebaseProvider := push.NewFirebaseProvider(bgCtx, cfg.firebasePKPath)
 
-	pushService := push.NewService(pushRepository, firebaseProvider)
-	mailService := mailer.NewPostmarkService(cfg.mailerAPIKey)
-
-	pushHandler := push.NewHandler(pushService)
-	mailHandler := mailer.NewHandler(mailService)
+	pushHandler := push.NewHandler(push.NewService(pushRepository, firebaseProvider))
+	mailHandler := mailer.NewHandler(mailer.NewPostmarkService(cfg.mailerAPIKey))
 
 	a.mux.Handle(
 		sendEmailRoute,
@@ -94,18 +93,10 @@ func (a *App) registerRoutes(cfg Config) {
 			xtoken.UserRole,
 		),
 	)
-
-	a.mux.Handle(
-		deleteTokenRoute,
-		xtoken.Authorize(
-			http.HandlerFunc(pushHandler.DeleteToken),
-			xtoken.UserRole,
-		),
-	)
 }
 
 func (a *App) Run() error {
-	fmt.Printf("Starting messaging service on %v...\n", a.addr)
+	fmt.Printf("Starting messaging service on %s...\n", a.addr)
 	return a.server.ListenAndServe()
 }
 

@@ -1,15 +1,16 @@
 package app
 
 const (
-	// send a push message
-	sendPushRoute		= "POST /api/v1/internal/push/send"
 	// register device token for an account
-	registerTokenRoute 	= "POST /api/v1/push/register"
+	registerTokenRoute 	= "POST /api/v1/push/tokens"
 	// delete all device tokens for an account
-	deleteTokensRoute 	= "DELETE /api/v1/push/delete"
+	deleteTokensRoute 	= "DELETE /api/v1/push/tokens"
 	// delete one device token for an account
-	deleteTokenRoute	= "DELETE /api/v1/push/delete/{id}"
+	deleteTokenRoute	= "DELETE /api/v1/push/tokens/{id}"
 	// send an email
-	sendEmailRoute 		= "POST /api/v1/internal/email/send"
+	sendEmailRoute 		= "POST /api/v1/internal/email"
+	// send a push message
+	sendPushRoute		= "POST /api/v1/internal/push"
+
 )
 
