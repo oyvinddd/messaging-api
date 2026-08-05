@@ -49,7 +49,7 @@ func (a *App) registerRoutes(cfg Config) {
 
 	pushRepository := push.NewRepository(db)
 
-	firebaseProvider := push.NewFirebaseProvider(context.Background(), "TODO:")
+	firebaseProvider := push.NewFirebaseProvider(context.Background(), cfg.firebasePKPath)
 
 	pushService := push.NewService(pushRepository, firebaseProvider)
 	mailService := mailer.NewPostmarkService(cfg.mailerAPIKey)
