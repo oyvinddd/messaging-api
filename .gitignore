@@ -31,3 +31,4 @@ go.work.sum
 *.sln
 *.sw?
 
+firebase-service-account.json

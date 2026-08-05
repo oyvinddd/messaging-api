@@ -13,6 +13,7 @@ type Config struct {
 	migrationPath	string
 	hmacSecret		string
 	serviceKey 		string
+	firebasePKPath	string
 }
 
 func NewDefaultConfig() *Config {
@@ -27,6 +28,7 @@ func NewDefaultConfig() *Config {
 	cfg.migrationPath	= varFromEnv("MIGRATION_PATH")
 	cfg.hmacSecret		= varFromEnv("HMAC_SECRET")
 	cfg.serviceKey		= varFromEnv("SERVICE_KEY")
+	cfg.firebasePKPath	= varFromEnv("FIREBASE_CREDENTIALS_PATH")
 	return &cfg
 }
 

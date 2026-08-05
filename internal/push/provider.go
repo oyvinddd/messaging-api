@@ -44,8 +44,9 @@ type (
 	}
 )
 
-func NewFirebaseProvider(ctx context.Context, credentialsPath string) Provider {
-	app, err := firebase.NewApp(ctx, nil, option.WithCredentialsFile(credentialsPath))
+func NewFirebaseProvider(ctx context.Context, credentialsFilePath string) Provider {
+	opt := option.WithCredentialsFile(credentialsFilePath)
+	app, err := firebase.NewApp(ctx, nil, opt)
 	if err != nil {
 		log.Fatalf("error initializing Firebase provider: %v\n", err)
 	}
