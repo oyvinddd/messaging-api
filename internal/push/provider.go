@@ -20,6 +20,8 @@ type (
 	Platform string
 
 	DeviceToken struct {
+		// ID the token id
+		ID uuid.UUID `json:"-"`
 		// Value is the push token
 		Value string `json:"device_token"`
 		// Platform the token belongs to
@@ -36,13 +38,17 @@ type (
 	}
 
 	Provider interface {
-		Send(ctx context.Context, deviceToken string, message Message) error
+		Send(ctx context.Context, tokens []DeviceToken, message Message) error
 	}
 
 	firebaseProvider struct {
 		client *messaging.Client
 	}
 )
+
+func NewDeviceToken(id uuid.UUID, token string, platform Platform) *DeviceToken {
+	return &DeviceToken{ID: id, Value: token, Platform: platform}
+}
 
 func NewFirebaseProvider(ctx context.Context, credentialsFilePath string) Provider {
 	opt := option.WithCredentialsFile(credentialsFilePath)
@@ -55,19 +61,36 @@ func NewFirebaseProvider(ctx context.Context, credentialsFilePath string) Provid
 	if err != nil {
 		log.Fatalf("error initializing Firebase provider: %v\n", err)
 	}
-
 	return &firebaseProvider{client: client}
 }
 
-func (p *firebaseProvider) Send(ctx context.Context, deviceToken string, message Message) error {
-	fcmMessage := &messaging.Message{
-		Token: deviceToken,
-		Notification: &messaging.Notification{
-			Title: message.Title,
-			Body: message.Body,
-		},
+func (p *firebaseProvider) Send(ctx context.Context, tokens []DeviceToken, message Message) error {
+	fcmMessages := fcmMessagesForTokens(tokens, message)
+	br, err := p.client.SendEach(ctx, fcmMessages)
+	if err != nil {
+		return err
 	}
-	_, err := p.client.Send(ctx, fcmMessage)
-	return err
+	for i, r := range br.Responses {
+		if !r.Success {
+			// TODO: delete token on our side
+			log.Printf("failed to send to %s: %v", fcmMessages[i].Token, r.Error)
+		}
+	}
+	return nil
+}
+
+func fcmMessagesForTokens(deviceTokens []DeviceToken, message Message) []*messaging.Message {
+	messages := make([]*messaging.Message, 0)
+	for _, token := range deviceTokens {
+		fcmMessage := &messaging.Message{
+			Token: token.Value,
+			Notification: &messaging.Notification{
+				Title: message.Title,
+				Body: message.Body,
+			},
+		}
+		messages = append(messages, fcmMessage)
+	}
+	return messages
 }
 

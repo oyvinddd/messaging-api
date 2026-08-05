@@ -13,6 +13,8 @@ type (
 		RegisterToken(ctx context.Context, id uuid.UUID, token DeviceToken) error
 		// DeleteTokens deletes all tokens registered on a given account
 		DeleteTokens(ctx context.Context, id uuid.UUID) error
+		// DeleteToken deletes token with a given id and account id
+		DeleteToken(ctx context.Context, accountID, tokenID uuid.UUID) error
 	}
 
 	service struct {
@@ -26,13 +28,13 @@ func NewService(repository Repository, provider Provider) Service {
 }
 
 func (s *service) Send(ctx context.Context, message Message) error {
-	// step 1. -- fetch the correct device token based on the account id
-	deviceToken, err := s.repository.GetToken(ctx, message.RecipientID)
+	// step 1. -- fetch the device tokens corresponding to the account id
+	tokens, err := s.repository.GetTokens(ctx, message.RecipientID)
 	if err != nil {
 		return err
 	}
 	// step 2. -- send message to FCM with the correct device ID
-	if err := s.provider.Send(ctx, deviceToken, message); err != nil {
+	if err := s.provider.Send(ctx, tokens, message); err != nil {
 		// TODO: there might be a case here where FCM says I need to remove the token, so handle it
 		return err
 	}
@@ -45,5 +47,9 @@ func (s *service) RegisterToken(ctx context.Context, id uuid.UUID, token DeviceT
 
 func (s *service) DeleteTokens(ctx context.Context, id uuid.UUID) error {
 	return s.repository.DeleteTokens(ctx, id)
+}
+
+func (s *service) DeleteToken(ctx context.Context, accountID, tokenID uuid.UUID) error {
+	return s.repository.DeleteToken(ctx, accountID, tokenID)
 }
 
