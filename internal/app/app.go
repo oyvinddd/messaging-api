@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 	"context"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/oyvinddd/xtoken"
+	"github.com/oyvinddd/xdb"
 	"github.com/oyvinddd/messaging-api/internal/push"
 	"github.com/oyvinddd/messaging-api/internal/mailer"
 )
@@ -39,7 +39,7 @@ func New(cfg Config) *App {
 
 func (a *App) registerRoutes(cfg Config) {
 
-	dbConn, err := setupDBConnection(context.Background(), cfg.dbURI) 
+	db, err := xdb.ConnectPG(context.Background(), *xdb.NewDefaultConfig(cfg.dbURI))
 	if err != nil {
 		log.Fatalf("unable to connect to db: %v\n", err)
 	}
@@ -47,7 +47,7 @@ func (a *App) registerRoutes(cfg Config) {
 	// set HMAC secret for auth middleware
 	xtoken.SetHMACSecret(cfg.hmacSecret)
 
-	pushRepository := push.NewRepository(dbConn)
+	pushRepository := push.NewRepository(db)
 
 	firebaseProvider := push.NewFirebaseProvider(context.Background(), "TODO:")
 
@@ -102,19 +102,6 @@ func (a *App) registerRoutes(cfg Config) {
 			xtoken.UserRole,
 		),
 	)
-}
-
-func setupDBConnection(ctx context.Context, connString string) (*pgxpool.Pool, error) {
-	pool, err := pgxpool.New(ctx, connString)
-	if err != nil {
-		return nil, err
-	}
-	// since New() doesn't wait to check if a connection was established,
-	// we'll try to ping the db right after to verify that we are connected
-	if err := pool.Ping(ctx); err != nil {
-		return nil, err
-	}
-	return pool, nil
 }
 
 func (a *App) Run() error {
