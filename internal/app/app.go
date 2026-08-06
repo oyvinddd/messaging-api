@@ -40,7 +40,7 @@ func New(cfg Config) *App {
 func (a *App) registerRoutes(cfg Config) {
 	bgCtx := context.Background()
 	// init db connection
-	xdbCfg := *xdb.NewDefaultConfig(cfg.dbURI)
+	xdbCfg := *xdb.NewConfig(cfg.dbURI)
 	db, err := xdb.ConnectPG(bgCtx, xdbCfg)
 	if err != nil {
 		log.Fatalf("unable to connect to db: %v\n", err)

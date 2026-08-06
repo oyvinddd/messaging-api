@@ -25,7 +25,6 @@ func NewDefaultConfig() *Config {
 	cfg.listeningPort 	= varFromEnv("LISTENING_PORT")
 	cfg.mailerAPIKey	= varFromEnv("POSTMARK_API_KEY")
 	cfg.dbURI			= varFromEnv("POSTGRES_URI")
-	cfg.migrationPath	= varFromEnv("MIGRATION_PATH")
 	cfg.hmacSecret		= varFromEnv("HMAC_SECRET")
 	cfg.serviceKey		= varFromEnv("SERVICE_KEY")
 	cfg.firebasePKPath	= varFromEnv("FIREBASE_CREDENTIALS_PATH")
