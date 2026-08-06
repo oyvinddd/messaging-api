@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
-	github.com/oyvinddd/xdb v1.0.2
+	github.com/oyvinddd/xdb v1.0.3
 	github.com/oyvinddd/xtoken v1.2.0
 	google.golang.org/api v0.279.0
 )
