@@ -3,7 +3,7 @@ package mailer
 import (
 	"net/http"
 	"encoding/json"
-	"github.com/oyvinddd/messaging-api/internal/response"
+	"github.com/oyvinddd/xhttp/response"
 )
 
 type (
@@ -30,13 +30,13 @@ func NewHandler(service Service) *Handler {
 func (h *Handler) SendEmail(w http.ResponseWriter, r *http.Request) {
 	var message Message
 	if err := json.NewDecoder(r.Body).Decode(&message); err != nil {
-		response.WithError(w, malformedEmailError, http.StatusBadRequest)
+		response.Error(w, malformedEmailError, http.StatusBadRequest)
 		return
 	}
 	if err := h.service.Send(r.Context(), message); err != nil {
-		response.WithError(w, err, http.StatusBadRequest)
+		response.Error(w, err, http.StatusBadRequest)
 		return
 	}
-	response.WithStatusOnly(w, http.StatusOK)
+	response.StatusCode(w, http.StatusOK)
 }
 

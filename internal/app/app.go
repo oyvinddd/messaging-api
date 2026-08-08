@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 	"context"
-	"github.com/oyvinddd/xtoken"
-	"github.com/oyvinddd/xdb"
+	"github.com/oyvinddd/xhttp/db"
+	xauth "github.com/oyvinddd/xhttp/auth"
 	"github.com/oyvinddd/messaging-api/internal/push"
 	"github.com/oyvinddd/messaging-api/internal/mailer"
 )
@@ -40,14 +40,13 @@ func New(cfg Config) *App {
 func (a *App) registerRoutes(cfg Config) {
 	bgCtx := context.Background()
 	// init db connection
-	xdbCfg := *xdb.NewConfig(cfg.dbURI)
-	db, err := xdb.ConnectPG(bgCtx, xdbCfg)
+	db, err := db.Connect(bgCtx, *db.NewConfig(cfg.dbURI))
 	if err != nil {
 		log.Fatalf("unable to connect to db: %v\n", err)
 	}
 
 	// set HMAC secret for auth middleware
-	xtoken.SetHMACSecret(cfg.hmacSecret)
+	xauth.SetHMACSecret(cfg.hmacSecret)
 
 	pushRepository := push.NewRepository(db)
 
@@ -58,39 +57,39 @@ func (a *App) registerRoutes(cfg Config) {
 
 	a.mux.Handle(
 		sendEmailRoute,
-		xtoken.RequireServiceKey(cfg.serviceKey)(
+		xauth.RequireServiceKey(cfg.serviceKey)(
 			http.HandlerFunc(mailHandler.SendEmail),
 		),
 	)
 
 	a.mux.Handle(
 		sendPushRoute, 
-		xtoken.RequireServiceKey(cfg.serviceKey)(
+		xauth.RequireServiceKey(cfg.serviceKey)(
 			http.HandlerFunc(pushHandler.SendPush),
 		),
 	)
 
 	a.mux.Handle(
 		registerTokenRoute,
-		xtoken.Authorize(
+		xauth.Authorize(
 			http.HandlerFunc(pushHandler.RegisterToken),
-			xtoken.UserRole,
+			xauth.UserRole,
 		),
 	)
 
 	a.mux.Handle(
 		deleteTokensRoute,
-		xtoken.Authorize(
+		xauth.Authorize(
 			http.HandlerFunc(pushHandler.DeleteTokens),
-			xtoken.UserRole,
+			xauth.UserRole,
 		),
 	)
 
 	a.mux.Handle(
 		deleteTokenRoute,
-		xtoken.Authorize(
+		xauth.Authorize(
 			http.HandlerFunc(pushHandler.DeleteToken),
-			xtoken.UserRole,
+			xauth.UserRole,
 		),
 	)
 }
